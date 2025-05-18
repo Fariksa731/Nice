@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>لوحة التحكم</title>
+  <style>
+    input, button { margin: 5px; padding: 8px; }
+    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h1>إدارة المنتجات</h1>
+  <input id="name" placeholder="اسم المنتج" />
+  <input id="description" placeholder="الوصف" />
+  <input id="price" placeholder="السعر" />
+  <input id="image" placeholder="رابط الصورة" />
+  <button onclick="addProduct()">إضافة</button>
+
+  <table id="productTable">
+    <thead><tr><th>الاسم</th><th>الوصف</th><th>السعر</th><th>صورة</th><th>إجراءات</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function fetchProducts() {
+      const res = await fetch("/.netlify/functions/getProducts");
+      const products = await res.json();
+      const tbody = document.querySelector("tbody");
+      tbody.innerHTML = "";
+      products.forEach(p => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${p.name}</td><td>${p.description}</td><td>${p.price}</td>
+            <td><img src="${p.image}" width="50"/></td>
+            <td>
+              <button onclick='deleteProduct("${p._id}")'>🗑 حذف</button>
+              <button onclick='editProduct("${p._id}")'>✏ تعديل</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+async function addProduct() {
+  const data = {
+    name: name.value,
+    description: description.value,
+    price: price.value,
+    image: image.value
+  };
+  await fetch("/.netlify/functions/addProduct", {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  fetchProducts();
+}
+
+async function deleteProduct(id) {
+  await fetch("/.netlify/functions/deleteProduct", {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+  fetchProducts();
+}
+
+async function editProduct(id) {
+  const name = prompt("اسم جديد");
+  const description = prompt("وصف جديد");
+  const price = prompt("سعر جديد");
+  const image = prompt("رابط صورة جديد");
+
+  await fetch("/.netlify/functions/updateProduct", {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, name, description, price, image })
+  });
+  fetchProducts();
+}
+
+  </script>
+</body>
+</html>
